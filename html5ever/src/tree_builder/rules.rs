@@ -820,6 +820,13 @@ where
                         )
                     {
                         self.unexpected(&tag);
+                        // VIPER-PATCH(select-fragment-input): the HTML
+                        // Standard's in-body rule for an "input" start tag
+                        // in a fragment whose context element is a select:
+                        // "Parse error. Ignore the token. Return."
+                        // (https://html.spec.whatwg.org/multipage/parsing.html#parsing-main-inbody).
+                        // Upstream 0.40.1 reports the error but inserts it.
+                        return ProcessResult::Done;
                     }
 
                     if self.in_scope_named(default_scope, local_name!("select")) {

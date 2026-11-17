@@ -1,11 +1,12 @@
 // VIPER-PATCH(svg-script-pause): the fork tests of Viper's patches, as
 // PATCHES.md lists them.
+// VIPER-PATCH(select-fragment-input): its tests are the last two below.
 
 use html5ever::interface::{ElementFlags, NodeOrText, QuirksMode};
 use html5ever::tendril::StrTendril;
 use html5ever::tokenizer::{BufferQueue, Tokenizer};
 use html5ever::tree_builder::{TreeBuilder, TreeSink};
-use html5ever::{Attribute, ExpandedName, QualName, TokenizerResult};
+use html5ever::{ns, Attribute, ExpandedName, LocalName, QualName, TokenizerResult};
 use std::borrow::Cow;
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
@@ -202,4 +203,49 @@ fn other_script_end_tags_in_foreign_content_do_not_pause() {
             "create svg rect",
         ]
     );
+}
+
+/// Parses `html` as a fragment whose context element is the HTML element
+/// `context`, and returns the elements the tree builder created for it and
+/// the parse errors it reported.
+fn parse_fragment(context: &str, html: &str) -> (Vec<String>, usize) {
+    let sink = Sink::default();
+    let name = QualName::new(None, ns!(html), LocalName::from(context));
+    let context = sink.create_element(name, Vec::new(), ElementFlags::default());
+    sink.log.borrow_mut().clear();
+    let builder = TreeBuilder::new_for_fragment(sink, context, None, Default::default());
+    let tokenizer = Tokenizer::new(builder, Default::default());
+    let input = BufferQueue::default();
+    input.push_back(StrTendril::from_slice(html));
+    while let TokenizerResult::Script(_) = tokenizer.feed(&input) {}
+    tokenizer.end();
+    let log = tokenizer.sink.sink.log.borrow().clone();
+    let errors = log.iter().filter(|entry| entry.starts_with("error")).count();
+    let created = log
+        .into_iter()
+        .filter(|entry| entry.starts_with("create"))
+        .collect();
+    (created, errors)
+}
+
+/// HTML Standard, the "in body" insertion mode, a start tag whose tag name
+/// is "input": if the parser's fragment context element is a select element,
+/// parse error, ignore the token (html5lib's tests_innerHTML_1.dat case 76).
+#[test]
+fn an_input_in_a_select_fragment_is_ignored() {
+    let (created, errors) = parse_fragment("select", "<input><option>");
+    assert_eq!(created, ["create xhtml option"]);
+    assert!(errors >= 1, "the ignored input is a parse error");
+    let (created, _) = parse_fragment("select", "<input type=hidden/>");
+    assert!(created.is_empty(), "{created:?}");
+}
+
+/// The rule's other steps are unchanged: in another context an input is
+/// inserted, and a select in scope is popped before it.
+#[test]
+fn an_input_in_other_fragments_is_inserted() {
+    let (created, _) = parse_fragment("div", "<input><option>");
+    assert_eq!(created, ["create xhtml input", "create xhtml option"]);
+    let (created, _) = parse_fragment("div", "<select><input>");
+    assert_eq!(created, ["create xhtml select", "create xhtml input"]);
 }
