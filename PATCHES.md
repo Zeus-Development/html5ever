@@ -73,7 +73,7 @@ and `Cargo.lock` changes only html5ever's source line.
 | --- | --- | --- | --- | --- | --- |
 | `registry-deps` | the workspace takes `markup5ever` 0.40.0, `tendril` 0.5.1 and `web_atoms` 0.3.0 from crates.io instead of its path members, so a git dependency on `html5ever` builds no other package from this repository | none | fork: the whole workspace's `cargo test` (its members build against the published crates); Viper: `viper-html::html5lib tree_construction_subset` | MIT OR Apache-2.0 (Viper's own change) | Viper-only; never offered |
 | `svg-script-pause` | the tree builder pauses after an SVG `script` element's end tag, and after a self-closing SVG `script` start tag, as the HTML Standard's rules for parsing tokens in foreign content require, so the script is processed before parsing goes on | `S3-SVG-SCRIPTS` (Viper's register; closed by the Viper task that pins this patch) | fork: `html5ever/tests/viper_patches.rs` `an_svg_script_end_tag_pauses_the_parser`, `a_self_closing_svg_script_pauses_the_parser`, `other_script_end_tags_in_foreign_content_do_not_pause`; Viper: `viper-html::parser an_svg_script_pauses_the_parser_at_its_end_tag` | MIT OR Apache-2.0 (Viper's own change, written from the HTML Standard) | candidate for upstream issue #118; never offered without the owner |
-| `select-fragment-input` | the tree builder ignores an `input` start tag in a fragment whose context element is a `select` element, as the HTML Standard's "in body" rule requires, where upstream reports the parse error but inserts the element | `tests_innerHTML_1.dat:76` (Viper's register, owner `S3-FRAGMENT`; closed by the Viper task that pins this patch) | fork: `html5ever/tests/viper_patches.rs` `an_input_in_a_select_fragment_is_ignored`, `an_input_in_other_fragments_is_inserted`; Viper: `viper-html::html5lib tree_construction_subset` (the case leaves its exclusions) | MIT OR Apache-2.0 (Viper's own change, written from the HTML Standard) | candidate for upstream; never offered without the owner |
+| `select-fragment-input` | the tree builder ignores an `input` start tag in a fragment whose context element is a `select` element, as the HTML Standard's "in body" rule requires, where upstream reports the parse error but inserts the element | `tests_innerHTML_1.dat:76` (Viper's register, owner `S3-FRAGMENT`; closed by the Viper task that pins this patch) | fork: `html5ever/tests/viper_patches.rs` `an_input_in_a_select_fragment_is_ignored`, `an_input_in_other_fragments_is_inserted` (and `rcdom/data/test/ignore` skips the submodule's outdated case); Viper: `viper-html::html5lib tree_construction_subset` (the case leaves its exclusions) | MIT OR Apache-2.0 (Viper's own change, written from the HTML Standard) | candidate for upstream; never offered without the owner |
 
 ### `registry-deps`
 
@@ -123,7 +123,10 @@ element; it now returns `ProcessResult::Done` after the error. The other
 steps (popping a `select` in scope, inserting and popping the element, the
 frameset-ok flag) are unchanged. html5lib's `tests_innerHTML_1.dat` case
 76 (`<input><option>` in a `select` context) now builds the tree it
-expects.
+expects. The fork's own `rcdom/html5lib-tests` submodule (`f994590f`,
+2025-09) predates that expectation and still has the input inserted, so
+`rcdom/data/test/ignore` skips its `tests_innerHTML_1.dat-75` (counted from
+0); Viper's newer html5lib-tests pin checks the case.
 
 ## Rebase procedure (fork side)
 

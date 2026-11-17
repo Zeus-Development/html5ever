@@ -3,3 +3,8 @@
 # See: https://github.com/html5lib/html5lib-tests/issues/180
 tb: webkit02.dat-44
 tb: webkit02.dat-45
+# VIPER-PATCH(select-fragment-input): this submodule's html5lib-tests
+# (f994590f, 2025-09) still expects an input start tag in a select fragment
+# to be inserted; the HTML Standard now ignores it, and later html5lib-tests
+# (Viper's pin 9329e646) expect the input ignored, as the patch does.
+tb: tests_innerHTML_1.dat-75
