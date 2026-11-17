@@ -220,7 +220,10 @@ fn parse_fragment(context: &str, html: &str) -> (Vec<String>, usize) {
     while let TokenizerResult::Script(_) = tokenizer.feed(&input) {}
     tokenizer.end();
     let log = tokenizer.sink.sink.log.borrow().clone();
-    let errors = log.iter().filter(|entry| entry.starts_with("error")).count();
+    let errors = log
+        .iter()
+        .filter(|entry| entry.starts_with("error"))
+        .count();
     let created = log
         .into_iter()
         .filter(|entry| entry.starts_with("create"))
