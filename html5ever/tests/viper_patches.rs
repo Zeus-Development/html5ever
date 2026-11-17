@@ -206,8 +206,9 @@ fn other_script_end_tags_in_foreign_content_do_not_pause() {
 }
 
 /// Parses `html` as a fragment whose context element is the HTML element
-/// `context`, and returns the elements the tree builder created for it and
-/// the parse errors it reported.
+/// `context`, and returns the elements the tree builder created for it (the
+/// fragment case's root `html` element left out) and the number of parse
+/// errors it reported.
 fn parse_fragment(context: &str, html: &str) -> (Vec<String>, usize) {
     let sink = Sink::default();
     let name = QualName::new(None, ns!(html), LocalName::from(context));
@@ -226,7 +227,7 @@ fn parse_fragment(context: &str, html: &str) -> (Vec<String>, usize) {
         .count();
     let created = log
         .into_iter()
-        .filter(|entry| entry.starts_with("create"))
+        .filter(|entry| entry.starts_with("create") && entry != "create xhtml html")
         .collect();
     (created, errors)
 }
